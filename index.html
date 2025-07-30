@@ -61,6 +61,11 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
         }
+        input[type="text"]:disabled, input[type="date"]:disabled, select:disabled {
+            background-color: #f8fafc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
         button {
             background-color: #3b82f6;
             color: #ffffff;
@@ -77,12 +82,18 @@
             justify-content: center;
             gap: 0.5rem;
         }
-        button:hover {
+        button:hover:not(:disabled) {
             background-color: #2563eb;
             transform: translateY(-1px);
         }
-        button:active {
+        button:active:not(:disabled) {
             transform: translateY(0);
+        }
+        button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+            opacity: 0.7;
+            box-shadow: none;
         }
         .grid-cols-2 {
             display: grid;
@@ -115,6 +126,11 @@
             background-color: #d1fae5;
             color: #065f46;
             border-color: #34d399;
+        }
+        .message-box.loading {
+            background-color: #e0f7fa;
+            color: #006064;
+            border-color: #80deea;
         }
         .purchase-list {
             border: 1px solid #e2e8f0;
@@ -178,27 +194,28 @@
 
         <div class="form-section">
             <h2 class="section-title">Registrar Nueva Compra</h2>
+            <div id="loadingMessage" class="message-box loading">Cargando aplicación... Por favor, espera.</div>
             <div class="grid-cols-2">
                 <div>
                     <label for="nombre">Nombre:</label>
-                    <input type="text" id="nombre" placeholder="Nombre de la persona" class="rounded-lg">
+                    <input type="text" id="nombre" placeholder="Nombre de la persona" class="rounded-lg" disabled>
                 </div>
                 <div>
                     <label for="apellido">Apellido:</label>
-                    <input type="text" id="apellido" placeholder="Apellido de la persona" class="rounded-lg">
+                    <input type="text" id="apellido" placeholder="Apellido de la persona" class="rounded-lg" disabled>
                 </div>
             </div>
             <div>
                 <label for="cuil">CUIL:</label>
-                <input type="text" id="cuil" placeholder="Número de CUIL (sin guiones)" class="rounded-lg">
+                <input type="text" id="cuil" placeholder="Número de CUIL (sin guiones)" class="rounded-lg" disabled>
             </div>
             <div>
                 <label for="fechaCompra">Fecha de Compra:</label>
-                <input type="date" id="fechaCompra" class="rounded-lg">
+                <input type="date" id="fechaCompra" class="rounded-lg" disabled>
             </div>
             <div>
                 <label for="mercaderia">Mercadería Comprada:</label>
-                <select id="mercaderia" class="rounded-lg">
+                <select id="mercaderia" class="rounded-lg" disabled>
                     <option value="">Selecciona una mercadería</option>
                     <option value="Heladera/freezer">Heladera/freezer</option>
                     <option value="Lavarropas">Lavarropas</option>
@@ -210,7 +227,7 @@
                     <option value="Aire acondicionado">Aire acondicionado</option>
                 </select>
             </div>
-            <button id="registrarCompraBtn">
+            <button id="registrarCompraBtn" disabled>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                     <path fill-rule="evenodd" d="M12 3.75a.75.75 0 0 1 .75.75v6.75h6.75a.75.75 0 0 1 0 1.5h-6.75v6.75a.75.75 0 0 1-1.5 0v-6.75H4.5a.75.75 0 0 1 0-1.5h6.75V4.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" />
                 </svg>
@@ -248,31 +265,51 @@
         const nombreInput = document.getElementById('nombre');
         const apellidoInput = document.getElementById('apellido');
         const cuilInput = document.getElementById('cuil');
-        const fechaCompraInput = document.getElementById('fechaCompra'); // New date input
-        const mercaderiaSelect = document.getElementById('mercaderia'); // Changed to select
+        const fechaCompraInput = document.getElementById('fechaCompra');
+        const mercaderiaSelect = document.getElementById('mercaderia');
         const registrarCompraBtn = document.getElementById('registrarCompraBtn');
         const messageBox = document.getElementById('message');
         const previousPurchasesDiv = document.getElementById('previousPurchases');
         const currentCuilDisplay = document.getElementById('currentCuilDisplay');
+        const loadingMessage = document.getElementById('loadingMessage'); // New loading message element
 
         /**
          * Displays a message in the message box.
          * @param {string} msg - The message to display.
-         * @param {string} type - The type of message ('success', 'error', or 'info').
+         * @param {string} type - The type of message ('success', 'error', 'info', or 'loading').
          */
         function showMessage(msg, type) {
             messageBox.textContent = msg;
             messageBox.className = `message-box ${type}`;
             messageBox.classList.remove('hidden');
+            if (type !== 'loading') { // Hide loading message if a different message type is shown
+                loadingMessage.classList.add('hidden');
+            }
             setTimeout(() => {
                 messageBox.classList.add('hidden');
             }, 5000); // Hide after 5 seconds
         }
 
         /**
+         * Toggles the disabled state of form elements.
+         * @param {boolean} enable - True to enable, false to disable.
+         */
+        function toggleFormState(enable) {
+            nombreInput.disabled = !enable;
+            apellidoInput.disabled = !enable;
+            cuilInput.disabled = !enable;
+            fechaCompraInput.disabled = !enable;
+            mercaderiaSelect.disabled = !enable;
+            registrarCompraBtn.disabled = !enable;
+        }
+
+        /**
          * Initializes Firebase and sets up authentication.
          */
         async function initializeFirebase() {
+            toggleFormState(false); // Disable form initially
+            loadingMessage.classList.remove('hidden'); // Show loading message
+
             try {
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -282,8 +319,14 @@
                     if (user) {
                         userId = user.uid;
                         console.log("Authenticated with user ID:", userId);
+                        toggleFormState(true); // Enable form
+                        loadingMessage.classList.add('hidden'); // Hide loading message
                         // Start listening for CUIL changes only after auth is ready
                         cuilInput.addEventListener('input', handleCuilChange);
+                        // If CUIL already has a value, fetch history immediately
+                        if (cuilInput.value.trim()) {
+                            fetchPreviousPurchases(cuilInput.value.trim());
+                        }
                     } else {
                         // Sign in anonymously if no initial auth token is provided
                         if (initialAuthToken) {
@@ -295,7 +338,8 @@
                 });
             } catch (error) {
                 console.error("Error initializing Firebase:", error);
-                showMessage("Error al inicializar la aplicación. Inténtalo de nuevo.", "error");
+                showMessage("Error al inicializar la aplicación. Por favor, recarga la página.", "error");
+                loadingMessage.classList.add('hidden'); // Hide loading message on error
             }
         }
 
@@ -305,7 +349,7 @@
          */
         function fetchPreviousPurchases(cuil) {
             if (!db || !userId) {
-                console.log("Firebase not initialized or user not authenticated.");
+                console.log("Firebase not initialized or user not authenticated. Cannot fetch purchases.");
                 return;
             }
 
@@ -318,8 +362,6 @@
             previousPurchasesDiv.innerHTML = '<p class="no-purchases">Cargando historial...</p>';
 
             const purchasesRef = collection(db, `artifacts/${appId}/public/data/purchases`);
-            // Note: orderBy is commented out as it can cause index issues if not configured in Firestore rules.
-            // Sorting is done in-memory after fetching.
             const q = query(purchasesRef, where("cuil", "==", cuil));
 
             unsubscribe = onSnapshot(q, (snapshot) => {
@@ -394,8 +436,8 @@
             const nombre = nombreInput.value.trim();
             const apellido = apellidoInput.value.trim();
             const cuil = cuilInput.value.trim();
-            const fechaCompra = fechaCompraInput.value; // Get the date value
-            const mercaderia = mercaderiaSelect.value; // Get the selected value from dropdown
+            const fechaCompra = fechaCompraInput.value;
+            const mercaderia = mercaderiaSelect.value;
 
             if (!nombre || !apellido || !cuil || !fechaCompra || !mercaderia) {
                 showMessage("Por favor, completa todos los campos.", "error");
@@ -408,24 +450,21 @@
             }
 
             try {
-                // Add the new purchase to Firestore
                 await addDoc(collection(db, `artifacts/${appId}/public/data/purchases`), {
                     nombre,
                     apellido,
                     cuil,
-                    fechaCompra, // Store the selected date
+                    fechaCompra,
                     mercaderia,
-                    timestamp: Date.now(), // Store timestamp for sorting and general record
-                    userId: userId // Store the user who registered it (optional, for tracking)
+                    timestamp: Date.now(),
+                    userId: userId
                 });
 
                 showMessage("Compra registrada exitosamente.", "success");
-                // Clear form fields after successful registration, keeping CUIL for history
                 nombreInput.value = '';
                 apellidoInput.value = '';
-                fechaCompraInput.value = ''; // Clear date field
-                mercaderiaSelect.value = ''; // Reset dropdown
-                // Keep CUIL field populated to immediately show updated history
+                fechaCompraInput.value = '';
+                mercaderiaSelect.value = '';
             } catch (e) {
                 console.error("Error al añadir el documento: ", e);
                 showMessage("Error al registrar la compra. Inténtalo de nuevo.", "error");
