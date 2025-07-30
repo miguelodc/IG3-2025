@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Compras Anual</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #334155;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        h1 {
+            color: #1e293b;
+            font-size: 2.25rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .form-section, .results-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        label {
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            color: #334155;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            background-color: #ffffff; /* Ensure select has white background */
+        }
+        input[type="text"]:focus, input[type="date"]:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        button {
+            background-color: #3b82f6;
+            color: #ffffff;
+            padding: 0.85rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            border: none;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        button:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .grid-cols-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        @media (min-width: 640px) {
+            .grid-cols-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .message-box {
+            background-color: #e0f2fe;
+            color: #0c4a6e;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid #90cdf4;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .message-box.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-color: #ef4444;
+        }
+        .message-box.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border-color: #34d399;
+        }
+        .purchase-list {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            background-color: #f8fafc;
+        }
+        .purchase-item {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .purchase-item:last-child {
+            border-bottom: none;
+        }
+        .purchase-item strong {
+            color: #1e293b;
+        }
+        .purchase-item span {
+            color: #475569;
+            font-size: 0.9rem;
+        }
+        .purchase-item .date {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 0.2rem;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        .search-results-container {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        .no-purchases {
+            text-align: center;
+            color: #64748b;
+            padding: 1rem;
+            font-style: italic;
+        }
+        .cuil-display {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #3b82f6;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Control Anual de Compras</h1>
+
+        <div class="form-section">
+            <h2 class="section-title">Registrar Nueva Compra</h2>
+            <div class="grid-cols-2">
+                <div>
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" placeholder="Nombre de la persona" class="rounded-lg">
+                </div>
+                <div>
+                    <label for="apellido">Apellido:</label>
+                    <input type="text" id="apellido" placeholder="Apellido de la persona" class="rounded-lg">
+                </div>
+            </div>
+            <div>
+                <label for="cuil">CUIL:</label>
+                <input type="text" id="cuil" placeholder="Número de CUIL (sin guiones)" class="rounded-lg">
+            </div>
+            <div>
+                <label for="fechaCompra">Fecha de Compra:</label>
+                <input type="date" id="fechaCompra" class="rounded-lg">
+            </div>
+            <div>
+                <label for="mercaderia">Mercadería Comprada:</label>
+                <select id="mercaderia" class="rounded-lg">
+                    <option value="">Selecciona una mercadería</option>
+                    <option value="Heladera/freezer">Heladera/freezer</option>
+                    <option value="Lavarropas">Lavarropas</option>
+                    <option value="Lavavajillas">Lavavajillas</option>
+                    <option value="Horno/cocina">Horno/cocina</option>
+                    <option value="Calefones">Calefones</option>
+                    <option value="Termotanques">Termotanques</option>
+                    <option value="Calderas">Calderas</option>
+                    <option value="Aire acondicionado">Aire acondicionado</option>
+                </select>
+            </div>
+            <button id="registrarCompraBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                    <path fill-rule="evenodd" d="M12 3.75a.75.75 0 0 1 .75.75v6.75h6.75a.75.75 0 0 1 0 1.5h-6.75v6.75a.75.75 0 0 1-1.5 0v-6.75H4.5a.75.75 0 0 1 0-1.5h6.75V4.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" />
+                </svg>
+                Registrar Compra
+            </button>
+            <div id="message" class="message-box hidden"></div>
+        </div>
+
+        <div class="search-results-container">
+            <h2 class="section-title">Historial de Compras por CUIL</h2>
+            <div class="cuil-display" id="currentCuilDisplay"></div>
+            <div id="previousPurchases" class="purchase-list">
+                <p class="no-purchases">Ingresa un CUIL y registra una compra para ver el historial.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase config and app ID
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app;
+        let db;
+        let auth;
+        let userId = null;
+        let unsubscribe = null; // To store the unsubscribe function for onSnapshot
+
+        const nombreInput = document.getElementById('nombre');
+        const apellidoInput = document.getElementById('apellido');
+        const cuilInput = document.getElementById('cuil');
+        const fechaCompraInput = document.getElementById('fechaCompra'); // New date input
+        const mercaderiaSelect = document.getElementById('mercaderia'); // Changed to select
+        const registrarCompraBtn = document.getElementById('registrarCompraBtn');
+        const messageBox = document.getElementById('message');
+        const previousPurchasesDiv = document.getElementById('previousPurchases');
+        const currentCuilDisplay = document.getElementById('currentCuilDisplay');
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} msg - The message to display.
+         * @param {string} type - The type of message ('success', 'error', or 'info').
+         */
+        function showMessage(msg, type) {
+            messageBox.textContent = msg;
+            messageBox.className = `message-box ${type}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Initializes Firebase and sets up authentication.
+         */
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Authenticated with user ID:", userId);
+                        // Start listening for CUIL changes only after auth is ready
+                        cuilInput.addEventListener('input', handleCuilChange);
+                    } else {
+                        // Sign in anonymously if no initial auth token is provided
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                showMessage("Error al inicializar la aplicación. Inténtalo de nuevo.", "error");
+            }
+        }
+
+        /**
+         * Fetches and displays previous purchases for a given CUIL.
+         * @param {string} cuil - The CUIL to search for.
+         */
+        function fetchPreviousPurchases(cuil) {
+            if (!db || !userId) {
+                console.log("Firebase not initialized or user not authenticated.");
+                return;
+            }
+
+            // Unsubscribe from previous listener if it exists
+            if (unsubscribe) {
+                unsubscribe();
+            }
+
+            currentCuilDisplay.textContent = cuil ? `Historial para CUIL: ${cuil}` : 'Ingresa un CUIL para ver el historial.';
+            previousPurchasesDiv.innerHTML = '<p class="no-purchases">Cargando historial...</p>';
+
+            const purchasesRef = collection(db, `artifacts/${appId}/public/data/purchases`);
+            // Note: orderBy is commented out as it can cause index issues if not configured in Firestore rules.
+            // Sorting is done in-memory after fetching.
+            const q = query(purchasesRef, where("cuil", "==", cuil));
+
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                let purchases = [];
+                snapshot.forEach((doc) => {
+                    purchases.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort purchases by timestamp in descending order (most recent first)
+                purchases.sort((a, b) => b.timestamp - a.timestamp);
+
+                displayPurchases(purchases);
+            }, (error) => {
+                console.error("Error fetching purchases:", error);
+                showMessage("Error al cargar el historial de compras.", "error");
+                previousPurchasesDiv.innerHTML = '<p class="no-purchases error">Error al cargar el historial.</p>';
+            });
+        }
+
+        /**
+         * Displays the list of purchases in the UI.
+         * @param {Array<Object>} purchases - An array of purchase objects.
+         */
+        function displayPurchases(purchases) {
+            previousPurchasesDiv.innerHTML = ''; // Clear previous content
+
+            if (purchases.length === 0) {
+                previousPurchasesDiv.innerHTML = '<p class="no-purchases">No se encontraron compras para este CUIL.</p>';
+                return;
+            }
+
+            purchases.forEach(purchase => {
+                const purchaseItem = document.createElement('div');
+                purchaseItem.className = 'purchase-item';
+
+                // Format the date for display
+                const purchaseDate = purchase.fechaCompra ? new Date(purchase.fechaCompra + 'T00:00:00').toLocaleDateString('es-AR') : 'Fecha desconocida';
+                const registrationDate = purchase.timestamp ? new Date(purchase.timestamp).toLocaleString('es-AR') : 'Fecha de registro desconocida';
+
+
+                purchaseItem.innerHTML = `
+                    <strong>${purchase.mercaderia}</strong>
+                    <span>Comprador: ${purchase.nombre} ${purchase.apellido}</span>
+                    <span class="date">Fecha de Compra: ${purchaseDate}</span>
+                    <span class="date">Registrado el: ${registrationDate}</span>
+                `;
+                previousPurchasesDiv.appendChild(purchaseItem);
+            });
+        }
+
+        /**
+         * Handles the change event on the CUIL input field.
+         * Fetches and displays previous purchases for the entered CUIL.
+         */
+        function handleCuilChange() {
+            const cuil = cuilInput.value.trim();
+            if (cuil) {
+                fetchPreviousPurchases(cuil);
+            } else {
+                if (unsubscribe) {
+                    unsubscribe(); // Unsubscribe if CUIL is empty
+                }
+                currentCuilDisplay.textContent = 'Ingresa un CUIL para ver el historial.';
+                previousPurchasesDiv.innerHTML = '<p class="no-purchases">Ingresa un CUIL y registra una compra para ver el historial.</p>';
+            }
+        }
+
+        /**
+         * Handles the registration of a new purchase.
+         */
+        async function handleRegisterPurchase() {
+            const nombre = nombreInput.value.trim();
+            const apellido = apellidoInput.value.trim();
+            const cuil = cuilInput.value.trim();
+            const fechaCompra = fechaCompraInput.value; // Get the date value
+            const mercaderia = mercaderiaSelect.value; // Get the selected value from dropdown
+
+            if (!nombre || !apellido || !cuil || !fechaCompra || !mercaderia) {
+                showMessage("Por favor, completa todos los campos.", "error");
+                return;
+            }
+
+            if (!db || !userId) {
+                showMessage("La aplicación no está lista. Inténtalo de nuevo en unos segundos.", "error");
+                return;
+            }
+
+            try {
+                // Add the new purchase to Firestore
+                await addDoc(collection(db, `artifacts/${appId}/public/data/purchases`), {
+                    nombre,
+                    apellido,
+                    cuil,
+                    fechaCompra, // Store the selected date
+                    mercaderia,
+                    timestamp: Date.now(), // Store timestamp for sorting and general record
+                    userId: userId // Store the user who registered it (optional, for tracking)
+                });
+
+                showMessage("Compra registrada exitosamente.", "success");
+                // Clear form fields after successful registration, keeping CUIL for history
+                nombreInput.value = '';
+                apellidoInput.value = '';
+                fechaCompraInput.value = ''; // Clear date field
+                mercaderiaSelect.value = ''; // Reset dropdown
+                // Keep CUIL field populated to immediately show updated history
+            } catch (e) {
+                console.error("Error al añadir el documento: ", e);
+                showMessage("Error al registrar la compra. Inténtalo de nuevo.", "error");
+            }
+        }
+
+        // Event Listeners
+        registrarCompraBtn.addEventListener('click', handleRegisterPurchase);
+
+        // Initialize Firebase when the window loads
+        window.onload = initializeFirebase;
+    </script>
+</body>
+</html>
