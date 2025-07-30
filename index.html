@@ -251,10 +251,28 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables for Firebase config and app ID
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // --- INICIO DE CONFIGURACIÓN DE FIREBASE ---
+        // ESTOS SON LOS VALORES DE TU PROYECTO DE FIREBASE REAL.
+        const firebaseConfig = {
+          apiKey: "AIzaSyCAdRkXiQKJog-1CcoTk1Jgq3CTCaNIsKg",
+          authDomain: "control-de-compras-f7072.firebaseapp.com",
+          projectId: "control-de-compras-f7072",
+          storageBucket: "control-de-compras-f7072.firebasestorage.app",
+          messagingSenderId: "1025744995331",
+          appId: "1:1025744995331:web:5069fc6c4a283166513a36"
+        };
+
+        // NO NECESITAS UN initialAuthToken PARA GITHUB PAGES.
+        // La aplicación se autenticará de forma anónima si no hay un usuario logueado.
+        const initialAuthToken = null;
+        // --- FIN DE CONFIGURACIÓN DE FIREBASE ---
+
+        // IMPORTANTE: El `appId` que se usa en la ruta de Firestore
+        // (`artifacts/${appId}/public/data/purchases`) debe coincidir con el `projectId`
+        // de tu `firebaseConfig` para que los datos se guarden correctamente
+        // en tu proyecto de Firebase.
+        const appId = firebaseConfig.projectId;
+
 
         let app;
         let db;
@@ -329,16 +347,13 @@
                         }
                     } else {
                         // Sign in anonymously if no initial auth token is provided
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
+                        // (initialAuthToken es null en GitHub Pages, así que siempre se intentará anónimamente)
+                        await signInAnonymously(auth);
                     }
                 });
             } catch (error) {
                 console.error("Error initializing Firebase:", error);
-                showMessage("Error al inicializar la aplicación. Por favor, recarga la página.", "error");
+                showMessage("Error al inicializar la aplicación. Por favor, recarga la página. (Verifica tu configuración de Firebase en el código)", "error");
                 loadingMessage.classList.add('hidden'); // Hide loading message on error
             }
         }
@@ -361,6 +376,7 @@
             currentCuilDisplay.textContent = cuil ? `Historial para CUIL: ${cuil}` : 'Ingresa un CUIL para ver el historial.';
             previousPurchasesDiv.innerHTML = '<p class="no-purchases">Cargando historial...</p>';
 
+            // La ruta de la colección debe usar el projectId de tu FirebaseConfig
             const purchasesRef = collection(db, `artifacts/${appId}/public/data/purchases`);
             const q = query(purchasesRef, where("cuil", "==", cuil));
 
@@ -450,6 +466,7 @@
             }
 
             try {
+                // La ruta de la colección debe usar el projectId de tu FirebaseConfig
                 await addDoc(collection(db, `artifacts/${appId}/public/data/purchases`), {
                     nombre,
                     apellido,
